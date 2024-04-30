@@ -1,0 +1,3 @@
+_02_xtests/cases/rtrim.sql
+_02_xtests/cases/test_ltrim_table.sql
+_02_xtests/cases/test_rtrim_table.sql

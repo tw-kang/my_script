@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 version=$1
+task=$2
 jdbc_version=""
 cci_version=""
 former_version=""
@@ -27,7 +28,9 @@ cci_dir=${driver_dir}/CCI_Driver
 
 function print_help() {
 	echo
-	echo usage: bash $(basename $0) [major.minor.patch.build-hash]
+    echo "Usage: bash $0 version {deploy_engine|deploy_jdbc|deploy_cci|display_results}"
+    echo "Example: bash $0 11.4.0.1142-earfsd init"
+    echo "If no task is provided, the script will run the default sequence: init, deploy_engine, deploy_cci, deploy_jdbc, display_results"
 	echo
 }
 
@@ -130,6 +133,7 @@ function get_former_version() {
 }
 
 function deploy_engine() {
+    init
     echo "Starting engine deployment..."
     get_former_version "$version" "engine"
     read major minor patch build <<< $(extract_version_components "$version")
@@ -170,6 +174,7 @@ function deploy_engine() {
 }
 
 function deploy_jdbc() {
+    init
     echo "Starting JDBC deployment..."
     # Extract version components for JDBC version
     get_former_version "$jdbc_version" "jdbc"
@@ -201,6 +206,7 @@ function deploy_jdbc() {
 }
 
 function deploy_cci() {
+    init
     echo "Starting CCI deployment..."
     # Extract version components for CCI version
     get_former_version "$cci_version" "cci"
@@ -248,6 +254,14 @@ function display_results() {
     echo "Deployment Complete!"
 }
 
+function deploy_default ()
+{
+  init
+  deploy_engine
+  deploy_cci
+  deploy_jdbc
+  display_results
+}
 
 # Initial version check and setup
 if ! [[ $version =~ $pattern ]]; then
@@ -256,18 +270,26 @@ if ! [[ $version =~ $pattern ]]; then
     exit 1
 fi
 
-echo "Initialization..."
-init
-
-echo "Deploying Engine..."
-deploy_engine
-
-echo "Deploying JDBC Driver..."
-deploy_jdbc
-
-echo "Deploying CCI Driver..."
-deploy_cci
-
-# Display deployment results
-display_results
+# Main Execution Logic
+case $task in
+    "")
+        deploy_default
+        ;;
+    deploy_engine)
+        deploy_engine
+        ;;
+    deploy_jdbc)
+        deploy_jdbc
+        ;;
+    deploy_cci)
+        deploy_cci
+        ;;
+    display_results)
+        display_results
+        ;;
+    *)
+        echo "Error: Invalid task."
+        exit 1
+        ;;
+esac
 

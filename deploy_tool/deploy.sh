@@ -18,12 +18,9 @@ pattern_jdbc="JDBC-*"
 pattern_cci="CUBRID-CCI-*" 
 
 # Use variables for common directory paths
-#build_drop_dir="/home/dist/data/CUBRID_Engine/nightly/daily_build/${version}/drop"
-#engine_dir=/home/dist/data/CUBRID_Engine
-#driver_dir=/home/dist/data/CUBRID_Drivers
-build_drop_dir="/home/twkang/my_script/deploy_tool/deploy_test/CUBRID_Engine/nightly/daily_build/${version}/drop"
-engine_dir=/home/twkang/my_script/deploy_tool/deploy_test/CUBRID_Engine
-driver_dir=/home/twkang/my_script/deploy_tool/deploy_test/CUBRID_Drivers
+build_drop_dir="/home/dist/data/CUBRID_Engine/nightly/daily_build/${version}/drop"
+engine_dir=/home/dist/data/CUBRID_Engine
+driver_dir=/home/dist/data/CUBRID_Drivers
 jdbc_dir=${driver_dir}/JDBC_Driver
 cci_dir=${driver_dir}/CCI_Driver
 target_dir=
@@ -39,9 +36,7 @@ function print_help() {
 function parse_version() {
 	log "parse_version start"
     IFS='.' read -r major minor patch build <<< "$(echo $version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')"
-    #release_type=$(echo $version | grep -oE '[a-z]+$')
 	log "Parsed version: major=$major, minor=$minor, patch=$patch, build=$build"
-	#log "Parsed version: major=$major, minor=$minor, patch=$patch, build=$build, release_type=$release_type"
 }
 
 # Improve error handling in functions
@@ -64,9 +59,9 @@ function copy_files() {
 function make_symbolic_links() {
     local src_dir=$1
     local target_dir=$2
-	local version=$3
+    local version=$3
     local files=("${@:4}")
-	local new_version=$(echo "$version" | awk -F'.' '{print $1"."$2"-latest"}')
+    local new_version=$(echo "$version" | awk -F'.' '{print $1"."$2"-latest"}')
 
     if [ ! -d "${target_dir}" ]; then
         echo "Error: Target directory ${target_dir} does not exist."
@@ -137,7 +132,7 @@ function get_former_version() {
 
 function deploy_engine() {
     log "Starting engine deployment..."
-	readarray -t Engine_file_list < <(find "$build_drop_dir" -type f -exec basename {} \; | grep -E "$pattern_engine")
+    readarray -t Engine_file_list < <(find "$build_drop_dir" -type f -exec basename {} \; | grep -E "$pattern_engine")
     get_former_version "$version" "engine"
     read major minor patch build <<< $(extract_version_components "$version")
     target_dir="${engine_dir}/${major}.${minor}.${patch}"
@@ -145,7 +140,7 @@ function deploy_engine() {
 
     log "Copying files..."
     copy_files "$build_drop_dir" "$target_dir" "${Engine_file_list[@]}"
-    #copy_files "$engine_dir/$former_version" "$target_dir" "check_reserved.sql"
+    copy_files "$engine_dir/$former_version" "$target_dir" "check_reserved.sql"
 
     latest_dir="${engine_dir}/${major}.${minor}_latest"
     mkdir -p "$latest_dir"
@@ -202,7 +197,7 @@ function deploy_jdbc() {
 function deploy_cci() {
     log "Starting CCI deployment..."
     readarray -t CCI_file_list < <(find $build_drop_dir -type f -name "${pattern_cci}" ! -name "*debug*" -exec basename {} \;)
-	cci_version=`echo ${CCI_file_list[0]} | cut -d '-' -f 3-4`
+    cci_version=`echo ${CCI_file_list[0]} | cut -d '-' -f 3-4`
     get_former_version "$cci_version" "cci"
     read major minor patch build <<< $(extract_version_components "$cci_version")
 

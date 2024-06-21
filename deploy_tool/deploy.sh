@@ -29,7 +29,7 @@ cci_dir=${driver_dir}/CCI_Driver
 function print_help() {
 	echo
     echo "Usage: bash $0 version {deploy_engine|deploy_jdbc|deploy_cci|display_results}"
-    echo "Example: bash $0 11.4.0.1142-earfsd init"
+    echo "Example: bash $0 11.4.0.1142-earfsd deploy_engine"
     echo "If no task is provided, the script will run the default sequence: init, deploy_engine, deploy_cci, deploy_jdbc, display_results"
 	echo
 }
@@ -155,12 +155,15 @@ function deploy_engine() {
     # fi
 
     echo "Creating symbolic links..."
-    # Now, use make_symbolic_links to create symbolic links for the new version
-    make_symbolic_links "$target_dir" "$version" "$major.$minor" "${Engine_file_list[@]}"
+    # Create a [major].[minor]_latest directory
+    latest_dir="${engine_dir}/${major}.${minor}_latest"
+    mkdir -p "$latest_dir"
+
+    # Create symbolic links for the new version in the _latest directory
+    make_symbolic_links "$latest_dir" "$version" "$major.$minor" "${Engine_file_list[@]}"
 
     # Update the symbolic links at the engine directory level
     ln -Tfs "$target_dir" "${engine_dir}/${major}.${minor}"
-    ln -Tfs "$target_dir" "${engine_dir}/${major}.${minor}_latest"
 
     echo "Updating MD5 checksums..."
     # Handle MD5 checksum file creation
@@ -227,12 +230,15 @@ function deploy_cci() {
     fi
 
     echo "Creating symbolic links for CCI..."
-    # Create symbolic links for the CCI files
-    make_symbolic_links "$target_dir" "$cci_version" "$major.$minor" "${CCI_file_list[@]}"
+    # Create a [major].[minor]_latest directory
+    latest_dir="${cci_dir}/${major}.${minor}_latest"
+    mkdir -p "$latest_dir"
+
+    # Create symbolic links for the CCI files in the _latest directory
+    make_symbolic_links "$latest_dir" "$cci_version" "$major.$minor" "${CCI_file_list[@]}"
 
     # Update directory-level symbolic links to point to the new version
     ln -Tfs "$target_dir" "${cci_dir}/${major}.${minor}"
-    ln -Tfs "$target_dir" "${cci_dir}/${major}.${minor}_latest"
 
     echo "CCI deployment complete."
 }
@@ -289,6 +295,7 @@ case $task in
         ;;
     *)
         echo "Error: Invalid task."
+		print_help
         exit 1
         ;;
 esac
